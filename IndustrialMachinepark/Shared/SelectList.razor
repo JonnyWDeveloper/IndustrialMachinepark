@@ -5,11 +5,10 @@
         @foreach (var item in Items)
         {
             var id = Guid.NewGuid();
-           
-            <li id="@id" class="@SetCss(item) list-group-item">
-                
 
-                @*@if (SelectedItems.Contains(item))
+            <li id="@id" class="@SetCss(item) list-group-item">
+
+                @if (SelectedItems!.Contains(item))
                 {
                     <input id="@id" type="checkbox" checked="checked" @onchange="_ => HandleChange(item)" />
                 }
@@ -20,24 +19,16 @@
                 @if (ItemTemplate is not null)
                 {
                     @ItemTemplate(item)
-                }*@
-
-
-                <input checked  type="checkbox" @onchange=" () => HandleChange(item)" />
-                @ItemTemplate(item)
-                <button class="btn btn-danger float-right" >
+                }
+                <button class="btn btn-danger float-right" @onclick=" () => Delete(item)">
                     x
                 </button>
             </li>
-
-           
         }
     </ul>
 </div>
 
 @code {
-    
-
 
     [Parameter]
     public IEnumerable<TItem>? Items
@@ -46,9 +37,22 @@
         set;
     }
 
-    [Parameter] 
+    [Parameter]
 
     public RenderFragment<TItem>? ItemTemplate
+    {
+        get;
+        set;
+    }
+    [Parameter]                        //Blazor convention @bind-{PROPERTY} "Chained bind"
+    public List<TItem>? ListedItems //Has to have the same name minus Changed (event name)
+    {                                 //as the EventCallback property
+        get;
+        set;
+    }
+
+    [Parameter]                        //Must have the name ListedItems + (Change = event name)
+    public EventCallback<List<TItem>> ListedItemsChanged
     {
         get;
         set;
@@ -68,34 +72,64 @@
         set;
     }
 
-    void HandleChange( TItem item)
+    void HandleChange(TItem item)
     {
-      
-        SetSelect(item);
-     
-        SelectedItemsChanged.InvokeAsync(SelectedItems);
+        if (item != null)
+        {
+            SetSelect(item);
 
-        StateHasChanged();
+            SelectedItemsChanged.InvokeAsync(SelectedItems);
+
+            //StateHasChanged();
+        }
     }
 
     bool IsSelected(TItem item)
     {
-        if (SelectedItems.Contains(item))
-        { 
+        if (item != null)
+        {
+            if (SelectedItems!.Contains(item))
+            {
 
-            return true; 
+                return true;
+            }
+            return false;
         }
-        return false;
+        else
+        {
+            return false;
+        }
     }
 
     string SetCss(TItem item)
         => IsSelected(item) ? "online" : "offline";
 
-    void SetSelect(TItem item) 
+    void SetSelect(TItem item)
     {
-        if (IsSelected(item)) 
-            SelectedItems.Remove(item);
-        else
-            SelectedItems.Add(item);
+        if (item != null)
+        {
+            if (IsSelected(item))
+                SelectedItems?.Remove(item);
+            else
+                SelectedItems?.Add(item);
+        }
+    }
+
+    void Delete(TItem item)
+    {
+        if (item != null)
+        {
+            if (IsSelected(item))
+            {
+                ListedItemsChanged.InvokeAsync(ListedItems);
+                ListedItems?.Remove(item);//Remove the li from ul
+                SelectedItemsChanged.InvokeAsync(SelectedItems);
+                SelectedItems?.Remove(item);
+            }
+            else
+            {
+                ListedItems?.Remove(item);//Remove the li from ul
+            }
+        }
     }
 }

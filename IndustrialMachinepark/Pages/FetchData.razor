@@ -16,7 +16,7 @@ else
 {
 
     <SelectList Items="WeatherForecasts" @bind-SelectedItems="SelectedForecasts"
-            Context="forecast">
+           @bind-ListedItems="WeatherForecasts"  Context="forecast">
         <ItemTemplate>
             <span class="span-padding">@forecast.Date </span>
             <span class="span-padding">@forecast.Summary</span>
@@ -50,8 +50,8 @@ else
     protected override async Task OnInitializedAsync()
     {
         forecasts = await Http.GetFromJsonAsync<WeatherForecast[]>("sample-data/weather.json");
-        SelectedForecasts = forecasts.ToList();
-        WeatherForecasts = forecasts.ToList();
+        SelectedForecasts = forecasts!.ToList();
+        WeatherForecasts = forecasts?.ToList();
     }
 
     public class WeatherForecast
